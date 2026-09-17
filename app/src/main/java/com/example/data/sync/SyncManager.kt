@@ -57,6 +57,20 @@ class SyncManager(
             atualizarContadorPendentes()
             sincronizarTudo()
             conectarRealtime()
+            iniciarLoopPolling()
+        }
+    }
+
+    private fun iniciarLoopPolling() {
+        scope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(20_000L) // Sincroniza a cada 20 segundos
+                if (isOnline()) {
+                    try {
+                        sincronizarTudo()
+                    } catch (_: Exception) {}
+                }
+            }
         }
     }
 
@@ -106,22 +120,36 @@ class SyncManager(
             }
 
             // 2. Baixar novidades do Supabase
-            val resBaixar = client.fetchOrdensModificadas(config.ultimoSync)
+            val resBaixar = if (config.ultimoSync == 0L) {
+                client.fetchTodasOrdens()
+            } else {
+                val syncSince = kotlin.math.max(0L, config.ultimoSync - 60_000L)
+                client.fetchOrdensModificadas(syncSince)
+            }
+
             if (resBaixar.isSuccess) {
                 val ordensRemotas = resBaixar.getOrNull() ?: emptyList()
                 var maxAtualizado = config.ultimoSync
 
                 for (remota in ordensRemotas) {
-                    val local = if (!remota.cloudId.isNullOrBlank()) {
+                    val local = (if (!remota.cloudId.isNullOrBlank()) {
                         ordemDao.getByCloudId(remota.cloudId)
-                    } else null
+                    } else null) ?: (if (remota.num > 0) {
+                        ordemDao.getByNum(remota.num)
+                    } else null)
 
                     if (local == null) {
-                        ordemDao.insert(remota.copy(sincronizado = true))
+                        if (!remota.removido) {
+                            ordemDao.insert(remota.copy(id = 0, sincronizado = true))
+                        }
                     } else {
-                        // Conflito: Last-write-wins baseado em atualizadoEm
-                        if (remota.atualizadoEm > local.atualizadoEm) {
-                            ordemDao.update(remota.copy(id = local.id, sincronizado = true))
+                        if (remota.removido) {
+                            ordemDao.update(local.copy(removido = true, sincronizado = true, atualizadoEm = remota.atualizadoEm, cloudId = remota.cloudId))
+                        } else {
+                            // Conflito: Last-write-wins baseado em atualizadoEm
+                            if (remota.atualizadoEm >= local.atualizadoEm || local.sincronizado) {
+                                ordemDao.update(remota.copy(id = local.id, sincronizado = true))
+                            }
                         }
                     }
 

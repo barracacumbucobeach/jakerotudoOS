@@ -26,6 +26,9 @@ interface OrdemDao {
     @Query("SELECT * FROM ordens WHERE cloudId = :cloudId LIMIT 1")
     suspend fun getByCloudId(cloudId: String): Ordem?
 
+    @Query("SELECT * FROM ordens WHERE num = :num LIMIT 1")
+    suspend fun getByNum(num: Int): Ordem?
+
     @Query("SELECT MAX(num) FROM ordens")
     suspend fun getMaxNumero(): Int?
 

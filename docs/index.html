@@ -150,6 +150,38 @@
       box-shadow: 0 6px 16px rgba(138,43,6,0.35);
     }
 
+    /* Pílula de Sincronização em Tempo Real */
+    .sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 14px;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sync-pill.status-synced {
+      background: #ecfdf5;
+      color: #047857;
+      border-color: #a7f3d0;
+    }
+    .sync-pill.status-synced:hover {
+      background: #d1fae5;
+    }
+    .sync-pill.status-syncing {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+    .sync-pill.status-error {
+      background: #fef2f2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+
     /* Container Principal */
     main.main-content {
       max-width: 1200px;
@@ -726,9 +758,15 @@
         <button class="nav-btn" onclick="navigate('configuracoes')"><i class="fa-solid fa-gear"></i> Ajustes</button>
       </nav>
 
-      <button class="btn-new-os" onclick="abrirModalNovaOrdem()">
-        <i class="fa-solid fa-plus"></i> Nova OS
-      </button>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button id="btn-sync-supabase" class="sync-pill status-synced" onclick="sincronizarComSupabase(false)" title="Sincronizar com o Banco de Dados e o APK">
+          <i class="fa-solid fa-cloud-arrow-up" id="sync-icon"></i>
+          <span id="sync-text">Sincronizado</span>
+        </button>
+        <button class="btn-new-os" onclick="abrirModalNovaOrdem()">
+          <i class="fa-solid fa-plus"></i> Nova OS
+        </button>
+      </div>
     </div>
   </header>
 
@@ -1069,14 +1107,50 @@
     let ordens = [];
     let filtroStatusAtual = 'TODOS';
     let fotosFormulario = [];
+    let isSincronizando = false;
+    let realtimeChannel = null;
+
+    function atualizarBadgeSync(estado, texto) {
+      const btn = document.getElementById('btn-sync-supabase');
+      const icon = document.getElementById('sync-icon');
+      const txt = document.getElementById('sync-text');
+      if (!btn || !icon || !txt) return;
+
+      btn.classList.remove('status-synced', 'status-syncing', 'status-error');
+
+      if (estado === 'syncing') {
+        btn.classList.add('status-syncing');
+        icon.className = 'fa-solid fa-rotate fa-spin';
+        txt.innerText = texto || 'Sincronizando...';
+      } else if (estado === 'error') {
+        btn.classList.add('status-error');
+        icon.className = 'fa-solid fa-triangle-exclamation';
+        txt.innerText = texto || 'Falha na Nuvem';
+      } else {
+        btn.classList.add('status-synced');
+        icon.className = 'fa-solid fa-cloud-arrow-up';
+        txt.innerText = texto || 'Sincronizado';
+      }
+    }
 
     // Inicialização
     function inicializar() {
       carregarConfiguracoes();
-      carregarOrdens();
+      carregarOrdensLocais();
       atualizarContadores();
       renderizarOrdens();
       document.getElementById('ordem-data').value = new Date().toISOString().split('T')[0];
+
+      // Sincroniza imediatamente com o Supabase e inicializa Realtime
+      sincronizarComSupabase(false);
+      iniciarRealtimeSupabase();
+
+      // Loop de polling para manter site e APK 100% atualizados
+      setInterval(() => sincronizarComSupabase(true), 12000);
+
+      // Sincroniza ao focar ou voltar para a aba
+      window.addEventListener('focus', () => sincronizarComSupabase(true));
+      window.addEventListener('online', () => sincronizarComSupabase(false));
     }
 
     function carregarConfiguracoes() {
@@ -1105,9 +1179,11 @@
       localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
       alert('Configurações salvas com sucesso!');
       renderizarOrdens();
+      sincronizarComSupabase(false);
+      iniciarRealtimeSupabase();
     }
 
-    function carregarOrdens() {
+    function carregarOrdensLocais() {
       const salvas = localStorage.getItem(STORAGE_KEY);
       if (salvas) {
         try {
@@ -1116,36 +1192,140 @@
           ordens = [];
         }
       }
-      
-      // Amostra inicial se estiver vazio
-      if (!ordens || ordens.length === 0) {
-        ordens = [
-          {
-            id: 1,
-            cliente: "Studio Bella Estética",
-            telefone: "(85) 99876-5432",
-            servico: "Criação de Identidade Visual + 10 Artes para Redes Sociais",
-            quantidade: 1,
-            valorUnitario: 850.00,
-            desconto: 50.00,
-            valor: 800.00,
-            status: "ANDAMENTO",
-            data: new Date().toISOString().split('T')[0],
-            entregaPrevista: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
-            observacoes: "Paleta em tons dourado e rosé. Entregar primeiras prévias no WhatsApp.",
-            fotos: [],
-            pagamentos: [
-              { id: 101, valor: 400.00, data: new Date().toISOString().split('T')[0], metodo: "PIX", observacao: "Entrada 50%" }
-            ]
-          }
-        ];
-        salvarNoStorage();
-      }
     }
 
     function salvarNoStorage() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(ordens));
       atualizarContadores();
+    }
+
+    // Converte registro do Supabase para formato da interface
+    function converterLinhaSupabase(row) {
+      const d = row.dados || {};
+
+      // Pagamentos
+      let pagamentos = [];
+      const rawPags = d.pagamentos || d.pagos;
+      if (Array.isArray(rawPags)) {
+        pagamentos = rawPags;
+      } else if (typeof rawPags === 'string') {
+        try {
+          const parsed = JSON.parse(rawPags);
+          pagamentos = Array.isArray(parsed) ? parsed : [];
+        } catch (_) { pagamentos = []; }
+      }
+
+      // Fotos
+      let fotos = [];
+      const rawFotos = d.fotos;
+      if (Array.isArray(rawFotos)) {
+        fotos = rawFotos;
+      } else if (typeof rawFotos === 'string') {
+        try {
+          const parsed = JSON.parse(rawFotos);
+          fotos = Array.isArray(parsed) ? parsed : [];
+        } catch (_) { fotos = []; }
+      }
+
+      const qtd = Number(d.quantidade != null ? d.quantidade : d.qtd) || 1;
+      const unit = Number(d.valorUnitario != null ? d.valorUnitario : d.unit) || 0;
+      const desc = Number(d.desconto) || 0;
+      const entrada = Number(d.entrada) || 0;
+      const valorTotal = Math.max(0, (qtd * unit) - desc);
+
+      let status = (d.status || 'ABERTA').toString().trim().toUpperCase();
+      if (status === 'ANDAMENTO' || status === 'EM ANDAMENTO') status = 'ANDAMENTO';
+      else if (status === 'ENTREGUE' || status === 'ENTREGUES') status = 'ENTREGUE';
+      else status = 'ABERTA';
+
+      return {
+        id: row.num || 0,
+        num: row.num || 0,
+        cloudId: row.id,
+        cliente: d.cliente || '',
+        telefone: d.telefone || '',
+        servico: d.servico || '',
+        quantidade: qtd,
+        valorUnitario: unit,
+        entrada: entrada,
+        desconto: desc,
+        valor: valorTotal,
+        status: status,
+        data: d.data || new Date().toISOString().split('T')[0],
+        entregaPrevista: d.entregaPrevista || d.entregaPrev || '',
+        entregaReal: d.entregaReal || '',
+        vencimento: d.vencimento || '',
+        observacoes: d.observacoes || d.obs || '',
+        plano: d.plano || null,
+        fotos: fotos,
+        pagamentos: pagamentos,
+        atualizadoEm: row.atualizado_em || ''
+      };
+    }
+
+    // Busca do Supabase e sincroniza bidirecionalmente
+    async function sincronizarComSupabase(silencioso = false) {
+      if (isSincronizando) return;
+      if (!config.supabaseUrl || !config.supabaseKey) return;
+
+      isSincronizando = true;
+      if (!silencioso) atualizarBadgeSync('syncing', 'Buscando do APK...');
+
+      try {
+        const cleanUrl = config.supabaseUrl.replace(/\/+$/, '');
+        const res = await fetch(`${cleanUrl}/rest/v1/ordens?select=*&removido=is.false&order=num.desc`, {
+          method: 'GET',
+          headers: {
+            'apikey': config.supabaseKey,
+            'Authorization': `Bearer ${config.supabaseKey}`,
+            'Cache-Control': 'no-cache'
+          }
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const remotas = data.map(converterLinhaSupabase);
+          
+          ordens = remotas;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(ordens));
+          atualizarContadores();
+          filtrarOrdens();
+          atualizarBadgeSync('synced', `${ordens.length} OS Sincronizadas`);
+        }
+      } catch (err) {
+        console.error('Erro na sincronização Supabase:', err);
+        if (!silencioso) atualizarBadgeSync('error', 'Falha na Nuvem');
+      } finally {
+        isSincronizando = false;
+      }
+    }
+
+    // Configura inscrição em tempo real via Supabase Realtime WebSocket
+    function iniciarRealtimeSupabase() {
+      try {
+        if (!window.supabase || !config.supabaseUrl || !config.supabaseKey) return;
+        const supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+        
+        if (realtimeChannel) {
+          try { supabase.removeChannel(realtimeChannel); } catch (_) {}
+        }
+
+        realtimeChannel = supabase
+          .channel('canal-public-ordens')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'ordens' }, (payload) => {
+            console.log('Alteração em tempo real do banco/APK recebida:', payload);
+            sincronizarComSupabase(true);
+          })
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('Realtime Supabase conectado com sucesso');
+            }
+          });
+      } catch (e) {
+        console.warn('Realtime Supabase não pôde iniciar:', e);
+      }
     }
 
     // Navegação entre abas
@@ -1359,7 +1539,7 @@
       document.getElementById('modal-ordem').classList.add('active');
     }
 
-    function salvarOrdem(e) {
+    async function salvarOrdem(e) {
       e.preventDefault();
       const idInput = document.getElementById('ordem-id').value;
       const cliente = document.getElementById('ordem-cliente').value.trim();
@@ -1374,31 +1554,91 @@
       const entregaPrevista = document.getElementById('ordem-entrega-prevista').value;
       const observacoes = document.getElementById('ordem-observacoes').value.trim();
 
+      let targetOrdem = null;
+      let cloudId = null;
+      let num = 1;
+
       if (idInput) {
         // Atualizar existente
         const index = ordens.findIndex(o => o.id === parseInt(idInput));
         if (index !== -1) {
+          cloudId = ordens[index].cloudId || crypto.randomUUID();
+          num = ordens[index].num || ordens[index].id;
           ordens[index] = {
             ...ordens[index],
             cliente, telefone, servico, quantidade, valorUnitario, desconto, valor: valorTotal,
-            status, data, entregaPrevista, observacoes, fotos: fotosFormulario
+            status, data, entregaPrevista, observacoes, fotos: fotosFormulario,
+            cloudId: cloudId,
+            num: num
           };
+          targetOrdem = ordens[index];
         }
       } else {
         // Criar nova ordem
-        const novoId = ordens.length > 0 ? Math.max(...ordens.map(o => o.id)) + 1 : 1;
+        num = ordens.length > 0 ? Math.max(...ordens.map(o => o.num || o.id || 0)) + 1 : 1;
+        cloudId = crypto.randomUUID();
         const novaOrdem = {
-          id: novoId,
+          id: num,
+          num: num,
+          cloudId: cloudId,
           cliente, telefone, servico, quantidade, valorUnitario, desconto, valor: valorTotal,
           status, data, entregaPrevista, observacoes, fotos: fotosFormulario,
           pagamentos: []
         };
         ordens.unshift(novaOrdem);
+        targetOrdem = novaOrdem;
       }
 
       salvarNoStorage();
       fecharModal('modal-ordem');
       filtrarOrdens();
+
+      // Enviar imediatamente ao Supabase (sincronização bidirecional com APK)
+      if (targetOrdem && config.supabaseUrl && config.supabaseKey) {
+        atualizarBadgeSync('syncing', 'Salvando no APK & Nuvem...');
+        try {
+          const cleanUrl = config.supabaseUrl.replace(/\/+$/, '');
+          const payload = {
+            id: targetOrdem.cloudId || crypto.randomUUID(),
+            num: targetOrdem.num || targetOrdem.id,
+            dados: {
+              cliente: targetOrdem.cliente,
+              telefone: targetOrdem.telefone,
+              servico: targetOrdem.servico,
+              quantidade: targetOrdem.quantidade,
+              valorUnitario: targetOrdem.valorUnitario,
+              entrada: targetOrdem.entrada || 0,
+              desconto: targetOrdem.desconto || 0,
+              observacoes: targetOrdem.observacoes,
+              status: targetOrdem.status,
+              data: targetOrdem.data,
+              entregaPrevista: targetOrdem.entregaPrevista || null,
+              entregaReal: targetOrdem.entregaReal || null,
+              vencimento: targetOrdem.vencimento || null,
+              plano: targetOrdem.plano || null,
+              pagamentos: JSON.stringify(targetOrdem.pagamentos || []),
+              fotos: JSON.stringify(targetOrdem.fotos || [])
+            },
+            removido: false,
+            atualizado_em: new Date().toISOString()
+          };
+
+          await fetch(`${cleanUrl}/rest/v1/ordens`, {
+            method: 'POST',
+            headers: {
+              'apikey': config.supabaseKey,
+              'Authorization': `Bearer ${config.supabaseKey}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates,return=representation'
+            },
+            body: JSON.stringify(payload)
+          });
+          atualizarBadgeSync('synced', `${ordens.length} OS Sincronizadas`);
+        } catch (err) {
+          console.error('Erro ao enviar ordem para o Supabase:', err);
+          atualizarBadgeSync('error', 'Salvo localmente');
+        }
+      }
     }
 
     // Fotos no Formulário
@@ -1548,7 +1788,7 @@
       document.getElementById('modal-pagamento').classList.add('active');
     }
 
-    function salvarPagamento(e) {
+    async function salvarPagamento(e) {
       e.preventDefault();
       const ordemId = parseInt(document.getElementById('pag-ordem-id').value);
       const valor = parseFloat(document.getElementById('pag-valor').value) || 0;
@@ -1560,23 +1800,101 @@
       if (o) {
         if (!o.pagamentos) o.pagamentos = [];
         o.pagamentos.push({
-          id: Date.now(),
+          id: Date.now().toString(),
           valor, metodo, data, observacao
         });
         salvarNoStorage();
         fecharModal('modal-pagamento');
         verDetalhes(ordemId);
         filtrarOrdens();
+
+        // Enviar atualização de pagamento para o Supabase
+        if (config.supabaseUrl && config.supabaseKey) {
+          atualizarBadgeSync('syncing', 'Sincronizando pagamento...');
+          try {
+            const cleanUrl = config.supabaseUrl.replace(/\/+$/, '');
+            const payload = {
+              id: o.cloudId || crypto.randomUUID(),
+              num: o.num || o.id,
+              dados: {
+                cliente: o.cliente,
+                telefone: o.telefone,
+                servico: o.servico,
+                quantidade: o.quantidade,
+                valorUnitario: o.valorUnitario,
+                entrada: o.entrada || 0,
+                desconto: o.desconto || 0,
+                observacoes: o.observacoes,
+                status: o.status,
+                data: o.data,
+                entregaPrevista: o.entregaPrevista || null,
+                entregaReal: o.entregaReal || null,
+                vencimento: o.vencimento || null,
+                plano: o.plano || null,
+                pagamentos: JSON.stringify(o.pagamentos),
+                fotos: JSON.stringify(o.fotos || [])
+              },
+              removido: false,
+              atualizado_em: new Date().toISOString()
+            };
+
+            await fetch(`${cleanUrl}/rest/v1/ordens`, {
+              method: 'POST',
+              headers: {
+                'apikey': config.supabaseKey,
+                'Authorization': `Bearer ${config.supabaseKey}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates'
+              },
+              body: JSON.stringify(payload)
+            });
+            atualizarBadgeSync('synced', 'Pagamento Sincronizado');
+          } catch (err) {
+            console.error('Erro ao sincronizar pagamento no Supabase:', err);
+          }
+        }
       }
     }
 
     // Exclusão
-    function excluirOrdem(id) {
+    async function excluirOrdem(id) {
+      const o = ordens.find(x => x.id === id);
       if (confirm('Tem certeza que deseja excluir esta Ordem de Serviço?')) {
-        ordens = ordens.filter(o => o.id !== id);
+        ordens = ordens.filter(x => x.id !== id);
         salvarNoStorage();
         fecharModal('modal-detalhes');
         filtrarOrdens();
+
+        if (o && config.supabaseUrl && config.supabaseKey) {
+          atualizarBadgeSync('syncing', 'Excluindo da nuvem...');
+          try {
+            const cleanUrl = config.supabaseUrl.replace(/\/+$/, '');
+            const payload = {
+              id: o.cloudId || crypto.randomUUID(),
+              num: o.num || o.id,
+              dados: {
+                cliente: o.cliente,
+                servico: o.servico
+              },
+              removido: true,
+              atualizado_em: new Date().toISOString()
+            };
+
+            await fetch(`${cleanUrl}/rest/v1/ordens`, {
+              method: 'POST',
+              headers: {
+                'apikey': config.supabaseKey,
+                'Authorization': `Bearer ${config.supabaseKey}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates'
+              },
+              body: JSON.stringify(payload)
+            });
+            atualizarBadgeSync('synced', `${ordens.length} OS Sincronizadas`);
+          } catch (err) {
+            console.error('Erro ao excluir no Supabase:', err);
+          }
+        }
       }
     }
 

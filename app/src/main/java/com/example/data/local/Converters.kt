@@ -28,7 +28,8 @@ class Converters {
 
     @TypeConverter
     fun toStatusOrdem(value: String?): StatusOrdem = try {
-        StatusOrdem.valueOf(value ?: StatusOrdem.ABERTA.name)
+        val clean = (value ?: StatusOrdem.ABERTA.name).trim().uppercase()
+        StatusOrdem.valueOf(clean)
     } catch (_: Exception) {
         StatusOrdem.ABERTA
     }
