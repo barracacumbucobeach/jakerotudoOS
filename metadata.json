@@ -1,0 +1,6 @@
+{
+  "name": "Showcial Media",
+  "description": "Sistema de Ordens de Serviço (OS) com controle de entregas, pagamentos, WhatsApp, PDF e sincronização para Web e Android",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

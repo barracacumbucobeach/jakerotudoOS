@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Showcial Media - Sistema de Ordens de Serviço</title>
+  
+  <!-- Fontes & Ícones -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <!-- Supabase JS CDN para Sincronização em Tempo Real -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --primary: #1b7a85;
+      --primary-dark: #135d66;
+      --primary-light: #e6f4f5;
+      --accent-rust: #8a2b06;
+      --accent-lime: #8ee600;
+      --accent-green: #2e7d32;
+      --accent-amber: #e65100;
+      --accent-blue: #0288d1;
+      
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --text-sub: #94a3b8;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 20px -2px rgba(0,0,0,0.06), 0 2px 6px -1px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 25px -3px rgba(0,0,0,0.1), 0 4px 10px -2px rgba(0,0,0,0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Topbar */
+    header.topbar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .topbar-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px rgba(27,122,133,0.3);
+    }
+    .brand-info h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+    .brand-info span {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-desktop {
+      display: flex;
+      gap: 6px;
+    }
+    .nav-btn {
+      background: transparent;
+      border: none;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    .nav-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-new-os {
+      background: linear-gradient(135deg, var(--accent-rust), #b03a0a);
+      color: white;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(138,43,6,0.25);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-new-os:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(138,43,6,0.35);
+    }
+
+    /* Container Principal */
+    main.main-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px 80px 20px;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* Cards de Resumo / Estatísticas */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+    .stat-val {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    /* Empresa Info Banner */
+    .company-badge {
+      background: linear-gradient(to right, #ffffff, var(--primary-light));
+      border: 1px solid #c9e8eb;
+      border-left: 5px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.85rem;
+    }
+    .company-badge strong {
+      color: var(--primary);
+    }
+    .company-badge .pix-pill {
+      background: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      font-weight: 600;
+      color: var(--accent-green);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Filtros e Busca */
+    .controls-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: var(--shadow);
+    }
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(27,122,133,0.15);
+    }
+    .search-box i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-sub);
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .filter-btn {
+      background: #f1f5f9;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .filter-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* Grid de Ordens */
+    .orders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 18px;
+    }
+    .order-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .order-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    .order-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .os-num {
+      font-family: 'Space Grotesk', monospace;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--accent-rust);
+      background: #fff4ed;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .status-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .status-aberta {
+      background: #fff7ed;
+      color: var(--accent-amber);
+      border: 1px solid #fed7aa;
+    }
+    .status-andamento {
+      background: #f0f9ff;
+      color: var(--accent-blue);
+      border: 1px solid #bae6fd;
+    }
+    .status-entregue {
+      background: #f0fdf4;
+      color: var(--accent-green);
+      border: 1px solid #bbf7d0;
+    }
+
+    .order-client {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .order-service {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .order-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      background: #f8fafc;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      margin-bottom: 14px;
+    }
+    .order-meta div span {
+      color: var(--text-sub);
+      display: block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .order-meta div strong {
+      color: var(--text-main);
+    }
+
+    .order-financial {
+      border-top: 1px dashed var(--border);
+      padding-top: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .price-total {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .payment-status {
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .payment-quitado {
+      color: var(--accent-green);
+    }
+    .payment-falta {
+      color: var(--accent-rust);
+    }
+
+    /* Fotos Thumbnails */
+    .order-photos-preview {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .thumb-mini {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .thumb-mini:hover {
+      transform: scale(1.08);
+      border-color: var(--primary);
+    }
+
+    .order-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 6px;
+    }
+    .action-btn {
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .action-btn:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    .btn-action-view {
+      color: var(--primary);
+      background: var(--primary-light);
+      border-color: #c9e8eb;
+    }
+    .btn-action-view:hover {
+      background: #d3edf0;
+    }
+    .btn-action-wpp {
+      color: #16a34a;
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+    .btn-action-wpp:hover {
+      background: #dcfce7;
+    }
+    .btn-action-pdf {
+      color: #b91c1c;
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+    .btn-action-pdf:hover {
+      background: #fee2e2;
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-card {
+      background: white;
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      animation: modalSlide 0.2s ease-out;
+    }
+    @keyframes modalSlide {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 10;
+    }
+    .modal-header h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .btn-close {
+      background: #f1f5f9;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-close:hover {
+      background: #e2e8f0;
+      color: var(--text-main);
+    }
+    .modal-body {
+      padding: 22px;
+    }
+    .modal-footer {
+      padding: 16px 22px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      background: #f8fafc;
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+
+    /* Formulários */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(27,122,133,0.15);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* Barra Mobile Inferior */
+    .bottom-bar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 8px 12px;
+      z-index: 40;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    .bottom-bar-nav {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .bottom-nav-item i {
+      font-size: 1.15rem;
+    }
+    .bottom-nav-item.active {
+      color: var(--primary);
+    }
+
+    /* Print Styling (Para emissão de PDF e Impressão perfeita) */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+      }
+      header.topbar, .bottom-bar, .controls-bar, .stats-grid, .btn-new-os, .order-actions, .filter-pills, .nav-desktop, .no-print {
+        display: none !important;
+      }
+      main.main-content {
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+      .print-os-sheet {
+        display: block !important;
+      }
+    }
+
+    .print-os-sheet {
+      display: none;
+      background: white;
+      padding: 24px;
+      color: #1e293b;
+    }
+    .print-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 2.5px solid var(--accent-lime);
+      padding-bottom: 16px;
+      margin-bottom: 18px;
+    }
+    .print-brand h2 {
+      font-size: 1.5rem;
+      color: var(--primary);
+      font-weight: 800;
+    }
+    .print-brand p {
+      font-size: 0.85rem;
+      color: #475569;
+    }
+    .print-os-id {
+      text-align: right;
+    }
+    .print-os-id h3 {
+      font-size: 1.35rem;
+      color: var(--accent-rust);
+      font-weight: 800;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .nav-desktop {
+        display: none;
+      }
+      .bottom-bar {
+        display: block;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .form-row, .form-row-3 {
+        grid-template-columns: 1fr;
+      }
+      .controls-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-container">
+      <div class="brand">
+        <div class="brand-logo">SM</div>
+        <div class="brand-info">
+          <h1>Showcial Media</h1>
+          <span>Gestão de Ordens de Serviço</span>
+        </div>
+      </div>
+
+      <nav class="nav-desktop">
+        <button class="nav-btn active" onclick="navigate('ordens')"><i class="fa-solid fa-list-check"></i> Ordens</button>
+        <button class="nav-btn" onclick="navigate('clientes')"><i class="fa-solid fa-users"></i> Clientes</button>
+        <button class="nav-btn" onclick="navigate('financeiro')"><i class="fa-solid fa-chart-pie"></i> Financeiro</button>
+        <button class="nav-btn" onclick="navigate('configuracoes')"><i class="fa-solid fa-gear"></i> Ajustes</button>
+      </nav>
+
+      <button class="btn-new-os" onclick="abrirModalNovaOrdem()">
+        <i class="fa-solid fa-plus"></i> Nova OS
+      </button>
+    </div>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="main-content">
+    
+    <!-- Banner de Identificação da Empresa -->
+    <div class="company-badge">
+      <div>
+        🏢 <strong>Showcial Media</strong> · CNPJ: <strong>34.741.143/0001-76</strong>
+      </div>
+      <div>
+        <span class="pix-pill">
+          <i class="fa-brands fa-pix"></i> Pix (CNPJ): 34.741.143/0001-76 · <strong>Jorge Leandro de Jesus Braga</strong>
+        </span>
+      </div>
+    </div>
+
+    <!-- Seção: Ordens (Principal) -->
+    <section id="view-ordens">
+      <!-- Indicadores Rápidos -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e6f4f5; color:var(--primary);"><i class="fa-solid fa-clipboard-list"></i></div>
+          <div>
+            <div class="stat-val" id="stat-total-os">0</div>
+            <div class="stat-label">Total de OS</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fff7ed; color:var(--accent-amber);"><i class="fa-solid fa-clock"></i></div>
+          <div>
+            <div class="stat-val" id="stat-abertas">0</div>
+            <div class="stat-label">Abertas / Andamento</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#f0fdf4; color:var(--accent-green);"><i class="fa-solid fa-circle-check"></i></div>
+          <div>
+            <div class="stat-val" id="stat-recebido">R$ 0,00</div>
+            <div class="stat-label">Total Recebido</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fff1f2; color:var(--accent-rust);"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+          <div>
+            <div class="stat-val" id="stat-falta">R$ 0,00</div>
+            <div class="stat-label">Saldo a Receber</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de Filtros e Busca -->
+      <div class="controls-bar">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="input-busca" placeholder="Buscar por cliente, serviço ou nº da OS..." oninput="filtrarOrdens()">
+        </div>
+        <div class="filter-pills">
+          <button class="filter-btn active" onclick="setFiltroStatus('TODOS', this)">Todas</button>
+          <button class="filter-btn" onclick="setFiltroStatus('ABERTA', this)">Abertas</button>
+          <button class="filter-btn" onclick="setFiltroStatus('ANDAMENTO', this)">Em Andamento</button>
+          <button class="filter-btn" onclick="setFiltroStatus('ENTREGUE', this)">Entregues</button>
+        </div>
+      </div>
+
+      <!-- Lista de Ordens -->
+      <div class="orders-grid" id="lista-ordens">
+        <!-- Preenchido via JavaScript -->
+      </div>
+    </section>
+
+    <!-- Seção: Clientes -->
+    <section id="view-clientes" style="display: none;">
+      <h2 style="font-size: 1.3rem; margin-bottom: 16px; color: var(--primary);">Base de Clientes</h2>
+      <div class="orders-grid" id="lista-clientes"></div>
+    </section>
+
+    <!-- Seção: Financeiro -->
+    <section id="view-financeiro" style="display: none;">
+      <h2 style="font-size: 1.3rem; margin-bottom: 16px; color: var(--primary);">Relatório Financeiro</h2>
+      <div class="stat-card" style="margin-bottom: 20px;">
+        <div style="flex:1;">
+          <h4 style="color:var(--text-muted); margin-bottom: 8px;">Balanço Geral de Ordens</h4>
+          <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+            <div><span style="font-size:0.8rem; color:var(--text-sub);">Faturamento Previsto</span><div id="fin-faturamento" style="font-size:1.3rem; font-weight:800; color:var(--primary);">R$ 0,00</div></div>
+            <div><span style="font-size:0.8rem; color:var(--text-sub);">Total Já em Caixa</span><div id="fin-caixa" style="font-size:1.3rem; font-weight:800; color:var(--accent-green);">R$ 0,00</div></div>
+            <div><span style="font-size:0.8rem; color:var(--text-sub);">Inadimplência / A Receber</span><div id="fin-falta" style="font-size:1.3rem; font-weight:800; color:var(--accent-rust);">R$ 0,00</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="controls-bar">
+        <button class="btn-new-os" style="background:var(--primary);" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir Relatório Financeiro</button>
+      </div>
+      <div id="tabela-financeiro-container" style="background:white; border:1px solid var(--border); border-radius:var(--radius); padding:16px; overflow-x:auto;"></div>
+    </section>
+
+    <!-- Seção: Ajustes & Configurações -->
+    <section id="view-configuracoes" style="display: none;">
+      <h2 style="font-size: 1.3rem; margin-bottom: 16px; color: var(--primary);">Configurações e Backup</h2>
+      <div style="background:white; border:1px solid var(--border); border-radius:var(--radius); padding:20px; max-width:600px;">
+        <h4 style="margin-bottom:12px; color:var(--primary);">Dados da Empresa (Utilizados nas Ordens, PDF e WhatsApp)</h4>
+        <div class="form-group">
+          <label>Nome Fantasia</label>
+          <input type="text" id="cfg-nome" class="form-control" value="Showcial Media">
+        </div>
+        <div class="form-group">
+          <label>CNPJ</label>
+          <input type="text" id="cfg-cnpj" class="form-control" value="34.741.143/0001-76">
+        </div>
+        <div class="form-group">
+          <label>Chave Pix (CNPJ)</label>
+          <input type="text" id="cfg-pix-chave" class="form-control" value="34.741.143/0001-76">
+        </div>
+        <div class="form-group">
+          <label>Favorecido Pix</label>
+          <input type="text" id="cfg-pix-nome" class="form-control" value="Jorge Leandro de Jesus Braga">
+        </div>
+        <div class="form-group">
+          <label>Telefone / WhatsApp</label>
+          <input type="text" id="cfg-telefone" class="form-control" value="(85) 9 9759-8266">
+        </div>
+
+        <h4 style="margin:20px 0 12px 0; color:var(--primary);">Sincronização em Nuvem (Supabase)</h4>
+        <div class="form-group">
+          <label>URL Supabase</label>
+          <input type="text" id="cfg-supabase-url" class="form-control" value="https://muxvtacywjfgclfvtgia.supabase.co">
+        </div>
+        <div class="form-group">
+          <label>Anon Key</label>
+          <input type="text" id="cfg-supabase-key" class="form-control" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11eHZ0YWN5d2pmZ2NsZnZ0Z2lhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzk2NTcsImV4cCI6MjEwNDYxNTY1N30.PWBDf6SlY7vPv5bz0irTsdGVypXOdoJQYE7554_0ye8">
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;">
+          <button class="btn-new-os" style="background:var(--primary);" onclick="salvarConfiguracoes()"><i class="fa-solid fa-floppy-disk"></i> Salvar Alterações</button>
+          <button class="action-btn" onclick="exportarBackupJSON()"><i class="fa-solid fa-download"></i> Exportar Backup JSON</button>
+          <label class="action-btn" style="cursor:pointer;">
+            <i class="fa-solid fa-upload"></i> Importar Backup
+            <input type="file" accept=".json" onchange="importarBackupJSON(event)" style="display:none;">
+          </label>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Barra de Navegação Mobile -->
+  <div class="bottom-bar">
+    <div class="bottom-bar-nav">
+      <button class="bottom-nav-item active" onclick="navigate('ordens', this)"><i class="fa-solid fa-list-check"></i>Ordens</button>
+      <button class="bottom-nav-item" onclick="navigate('clientes', this)"><i class="fa-solid fa-users"></i>Clientes</button>
+      <button class="bottom-nav-item" onclick="navigate('financeiro', this)"><i class="fa-solid fa-chart-pie"></i>Finanças</button>
+      <button class="bottom-nav-item" onclick="navigate('configuracoes', this)"><i class="fa-solid fa-gear"></i>Ajustes</button>
+    </div>
+  </div>
+
+  <!-- Modal: Nova / Editar Ordem de Serviço -->
+  <div class="modal-overlay" id="modal-ordem">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-ordem-titulo">Nova Ordem de Serviço</h3>
+        <button class="btn-close" onclick="fecharModal('modal-ordem')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="form-ordem" onsubmit="salvarOrdem(event)">
+          <input type="hidden" id="ordem-id">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nome do Cliente *</label>
+              <input type="text" id="ordem-cliente" class="form-control" required placeholder="Ex: Maria Santos">
+            </div>
+            <div class="form-group">
+              <label>Telefone / WhatsApp</label>
+              <input type="text" id="ordem-telefone" class="form-control" placeholder="(85) 99999-9999">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Descrição do Serviço / Produto *</label>
+            <textarea id="ordem-servico" class="form-control" rows="2" required placeholder="Ex: Produção de 5 banners para campanha digital..."></textarea>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>Quantidade</label>
+              <input type="number" step="0.01" id="ordem-quantidade" class="form-control" value="1.0" oninput="calcularValorTotal()">
+            </div>
+            <div class="form-group">
+              <label>Valor Unitário (R$)</label>
+              <input type="number" step="0.01" id="ordem-valor-unitario" class="form-control" value="0.00" oninput="calcularValorTotal()">
+            </div>
+            <div class="form-group">
+              <label>Desconto (R$)</label>
+              <input type="number" step="0.01" id="ordem-desconto" class="form-control" value="0.00" oninput="calcularValorTotal()">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Valor Total Final (R$)</label>
+              <input type="text" id="ordem-valor-total" class="form-control" style="font-weight:800; color:var(--primary);" readonly>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="ordem-status" class="form-control">
+                <option value="ABERTA">Aberta</option>
+                <option value="ANDAMENTO">Em Andamento</option>
+                <option value="ENTREGUE">Entregue</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Data do Pedido</label>
+              <input type="date" id="ordem-data" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Previsão de Entrega</label>
+              <input type="date" id="ordem-entrega-prevista" class="form-control">
+            </div>
+          </div>
+
+          <!-- Fotos de Referência -->
+          <div class="form-group">
+            <label>Fotos de Referência (Links ou Anexos)</label>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+              <input type="url" id="ordem-novo-link-foto" class="form-control" placeholder="Cole link da imagem (URL https://...)">
+              <button type="button" class="action-btn" onclick="adicionarLinkFoto()"><i class="fa-solid fa-plus"></i> Inserir</button>
+            </div>
+            <label class="action-btn" style="cursor:pointer; display:inline-flex; width:auto;">
+              <i class="fa-solid fa-image"></i> Enviar Foto do Aparelho
+              <input type="file" accept="image/*" multiple onchange="processarUploadFotos(event)" style="display:none;">
+            </label>
+            <div id="preview-fotos-form" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Observações Gerais</label>
+            <textarea id="ordem-observacoes" class="form-control" rows="2" placeholder="Instruções de cores, formatos, prazos de aprovação..."></textarea>
+          </div>
+
+          <div class="modal-footer" style="padding:0; background:none; border:none; margin-top:16px;">
+            <button type="button" class="action-btn" onclick="fecharModal('modal-ordem')">Cancelar</button>
+            <button type="submit" class="btn-new-os" style="background:var(--primary);">Salvar Ordem</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Visualização e Detalhes da Ordem (Com Opção de Impressão PDF & WhatsApp) -->
+  <div class="modal-overlay" id="modal-detalhes">
+    <div class="modal-card" style="max-width:760px;">
+      <div class="modal-header">
+        <h3 id="detalhes-os-numero">Ordem de Serviço</h3>
+        <button class="btn-close" onclick="fecharModal('modal-detalhes')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="detalhes-conteudo">
+        <!-- Renderizado dinamicamente -->
+      </div>
+      <div class="modal-footer" id="detalhes-footer"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Registrar Pagamento -->
+  <div class="modal-overlay" id="modal-pagamento">
+    <div class="modal-card" style="max-width:440px;">
+      <div class="modal-header">
+        <h3>Registrar Pagamento</h3>
+        <button class="btn-close" onclick="fecharModal('modal-pagamento')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="form-pagamento" onsubmit="salvarPagamento(event)">
+          <input type="hidden" id="pag-ordem-id">
+          <div class="form-group">
+            <label>Valor Pago (R$) *</label>
+            <input type="number" step="0.01" id="pag-valor" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Forma de Pagamento</label>
+            <select id="pag-metodo" class="form-control">
+              <option value="PIX">Pix</option>
+              <option value="DINHEIRO">Dinheiro</option>
+              <option value="CARTAO">Cartão de Crédito/Débito</option>
+              <option value="TRANSFERENCIA">Transferência</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Data do Pagamento</label>
+            <input type="date" id="pag-data" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Observação</label>
+            <input type="text" id="pag-obs" class="form-control" placeholder="Ex: Entrada 50% ou Parcela 1">
+          </div>
+          <div class="modal-footer" style="padding:0; background:none; border:none; margin-top:16px;">
+            <button type="button" class="action-btn" onclick="fecharModal('modal-pagamento')">Cancelar</button>
+            <button type="submit" class="btn-new-os" style="background:var(--accent-green);">Confirmar Recebimento</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Visualizador de Foto em Alta Resolução -->
+  <div class="modal-overlay" id="modal-foto-zoom" onclick="fecharModal('modal-foto-zoom')">
+    <div style="position:relative; max-width:90vw; max-height:90vh;">
+      <img id="img-zoom-tag" src="" style="max-width:100%; max-height:85vh; border-radius:10px; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+      <div style="text-align:center; margin-top:10px;">
+        <a id="btn-zoom-open-new" href="#" target="_blank" class="action-btn" style="display:inline-flex; background:white;" onclick="event.stopPropagation()">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir em Nova Guia
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Folha Oculta de Impressão (CSS Print) -->
+  <div class="print-os-sheet" id="print-sheet"></div>
+
+  <!-- Lógica JavaScript da Aplicação -->
+  <script>
+    // --- ESTADO & PERSISTÊNCIA ---
+    const STORAGE_KEY = 'showcial_media_ordens_v1';
+    const CONFIG_KEY = 'showcial_media_config_v1';
+
+    let config = {
+      nome: 'Showcial Media',
+      cnpj: '34.741.143/0001-76',
+      pixChave: '34.741.143/0001-76',
+      pixTitular: 'Jorge Leandro de Jesus Braga',
+      telefone: '(85) 9 9759-8266',
+      supabaseUrl: 'https://muxvtacywjfgclfvtgia.supabase.co',
+      supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11eHZ0YWN5d2pmZ2NsZnZ0Z2lhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzk2NTcsImV4cCI6MjEwNDYxNTY1N30.PWBDf6SlY7vPv5bz0irTsdGVypXOdoJQYE7554_0ye8'
+    };
+
+    let ordens = [];
+    let filtroStatusAtual = 'TODOS';
+    let fotosFormulario = [];
+
+    // Inicialização
+    function inicializar() {
+      carregarConfiguracoes();
+      carregarOrdens();
+      atualizarContadores();
+      renderizarOrdens();
+      document.getElementById('ordem-data').value = new Date().toISOString().split('T')[0];
+    }
+
+    function carregarConfiguracoes() {
+      const salvas = localStorage.getItem(CONFIG_KEY);
+      if (salvas) {
+        try { config = { ...config, ...JSON.parse(salvas) }; } catch (e) {}
+      }
+      document.getElementById('cfg-nome').value = config.nome;
+      document.getElementById('cfg-cnpj').value = config.cnpj;
+      document.getElementById('cfg-pix-chave').value = config.pixChave;
+      document.getElementById('cfg-pix-nome').value = config.pixTitular;
+      document.getElementById('cfg-telefone').value = config.telefone;
+      document.getElementById('cfg-supabase-url').value = config.supabaseUrl;
+      document.getElementById('cfg-supabase-key').value = config.supabaseKey;
+    }
+
+    function salvarConfiguracoes() {
+      config.nome = document.getElementById('cfg-nome').value.trim() || 'Showcial Media';
+      config.cnpj = document.getElementById('cfg-cnpj').value.trim() || '34.741.143/0001-76';
+      config.pixChave = document.getElementById('cfg-pix-chave').value.trim() || '34.741.143/0001-76';
+      config.pixTitular = document.getElementById('cfg-pix-nome').value.trim() || 'Jorge Leandro de Jesus Braga';
+      config.telefone = document.getElementById('cfg-telefone').value.trim();
+      config.supabaseUrl = document.getElementById('cfg-supabase-url').value.trim();
+      config.supabaseKey = document.getElementById('cfg-supabase-key').value.trim();
+
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+      alert('Configurações salvas com sucesso!');
+      renderizarOrdens();
+    }
+
+    function carregarOrdens() {
+      const salvas = localStorage.getItem(STORAGE_KEY);
+      if (salvas) {
+        try {
+          ordens = JSON.parse(salvas);
+        } catch (e) {
+          ordens = [];
+        }
+      }
+      
+      // Amostra inicial se estiver vazio
+      if (!ordens || ordens.length === 0) {
+        ordens = [
+          {
+            id: 1,
+            cliente: "Studio Bella Estética",
+            telefone: "(85) 99876-5432",
+            servico: "Criação de Identidade Visual + 10 Artes para Redes Sociais",
+            quantidade: 1,
+            valorUnitario: 850.00,
+            desconto: 50.00,
+            valor: 800.00,
+            status: "ANDAMENTO",
+            data: new Date().toISOString().split('T')[0],
+            entregaPrevista: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
+            observacoes: "Paleta em tons dourado e rosé. Entregar primeiras prévias no WhatsApp.",
+            fotos: [],
+            pagamentos: [
+              { id: 101, valor: 400.00, data: new Date().toISOString().split('T')[0], metodo: "PIX", observacao: "Entrada 50%" }
+            ]
+          }
+        ];
+        salvarNoStorage();
+      }
+    }
+
+    function salvarNoStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(ordens));
+      atualizarContadores();
+    }
+
+    // Navegação entre abas
+    function navigate(viewName, btnElement) {
+      document.getElementById('view-ordens').style.display = viewName === 'ordens' ? 'block' : 'none';
+      document.getElementById('view-clientes').style.display = viewName === 'clientes' ? 'block' : 'none';
+      document.getElementById('view-financeiro').style.display = viewName === 'financeiro' ? 'block' : 'none';
+      document.getElementById('view-configuracoes').style.display = viewName === 'configuracoes' ? 'block' : 'none';
+
+      document.querySelectorAll('.nav-btn, .bottom-nav-item').forEach(b => b.classList.remove('active'));
+      if (btnElement) btnElement.classList.add('active');
+
+      if (viewName === 'clientes') renderizarClientes();
+      if (viewName === 'financeiro') renderizarFinanceiro();
+    }
+
+    // Formatação
+    function formatarMoeda(num) {
+      return (Number(num) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    function formatarData(dataIso) {
+      if (!dataIso) return '—';
+      const parts = dataIso.split('-');
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      return dataIso;
+    }
+    function osNumeroFormatado(id) {
+      return '#' + String(id).padStart(4, '0');
+    }
+
+    // Cálculos de Valores
+    function calcularValorTotal() {
+      const qtd = parseFloat(document.getElementById('ordem-quantidade').value) || 0;
+      const unit = parseFloat(document.getElementById('ordem-valor-unitario').value) || 0;
+      const desc = parseFloat(document.getElementById('ordem-desconto').value) || 0;
+      const total = Math.max(0, (qtd * unit) - desc);
+      document.getElementById('ordem-valor-total').value = formatarMoeda(total);
+    }
+
+    // Contadores
+    function atualizarContadores() {
+      const totalOs = ordens.length;
+      const abertas = ordens.filter(o => o.status === 'ABERTA' || o.status === 'ANDAMENTO').length;
+      
+      let faturamentoTotal = 0;
+      let totalRecebido = 0;
+
+      ordens.forEach(o => {
+        faturamentoTotal += Number(o.valor) || 0;
+        const pagos = (o.pagamentos || []).reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
+        totalRecebido += pagos;
+      });
+
+      const saldoFalta = Math.max(0, faturamentoTotal - totalRecebido);
+
+      document.getElementById('stat-total-os').innerText = totalOs;
+      document.getElementById('stat-abertas').innerText = abertas;
+      document.getElementById('stat-recebido').innerText = formatarMoeda(totalRecebido);
+      document.getElementById('stat-falta').innerText = formatarMoeda(saldoFalta);
+
+      // Finanças view
+      document.getElementById('fin-faturamento').innerText = formatarMoeda(faturamentoTotal);
+      document.getElementById('fin-caixa').innerText = formatarMoeda(totalRecebido);
+      document.getElementById('fin-falta').innerText = formatarMoeda(saldoFalta);
+    }
+
+    // Filtros
+    function setFiltroStatus(status, element) {
+      filtroStatusAtual = status;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      element.classList.add('active');
+      filtrarOrdens();
+    }
+
+    function filtrarOrdens() {
+      const termo = (document.getElementById('input-busca').value || '').toLowerCase();
+      const filtradas = ordens.filter(o => {
+        const matchStatus = filtroStatusAtual === 'TODOS' || o.status === filtroStatusAtual;
+        const matchTermo = o.cliente.toLowerCase().includes(termo) ||
+                           o.servico.toLowerCase().includes(termo) ||
+                           osNumeroFormatado(o.id).toLowerCase().includes(termo);
+        return matchStatus && matchTermo;
+      });
+      renderizarGrid(filtradas);
+    }
+
+    // Renderização das Ordens
+    function renderizarOrdens() {
+      filtrarOrdens();
+    }
+
+    function renderizarGrid(lista) {
+      const container = document.getElementById('lista-ordens');
+      if (lista.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1/-1; text-align:center; padding:50px 20px; color:var(--text-sub);">
+            <i class="fa-solid fa-folder-open" style="font-size:3rem; margin-bottom:12px; color:var(--border);"></i>
+            <h3>Nenhuma Ordem de Serviço encontrada</h3>
+            <p>Clique em "+ Nova OS" para cadastrar sua primeira ordem.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = lista.map(o => {
+        const totalPago = (o.pagamentos || []).reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
+        const saldoFalta = Math.max(0, (Number(o.valor) || 0) - totalPago);
+        const quitado = saldoFalta <= 0.01;
+
+        let statusClass = 'status-aberta';
+        let statusLabel = 'Aberta';
+        if (o.status === 'ANDAMENTO') { statusClass = 'status-andamento'; statusLabel = 'Em Andamento'; }
+        if (o.status === 'ENTREGUE') { statusClass = 'status-entregue'; statusLabel = 'Entregue'; }
+
+        // Miniaturas de fotos
+        let fotosHtml = '';
+        if (o.fotos && o.fotos.length > 0) {
+          fotosHtml = `
+            <div class="order-photos-preview">
+              ${o.fotos.slice(0, 4).map(f => `
+                <img src="${f}" class="thumb-mini" onclick="abrirFotoZoom('${f}')" title="Clique para ampliar">
+              `).join('')}
+              ${o.fotos.length > 4 ? `<span style="font-size:0.75rem; color:var(--text-sub); align-self:center;">+${o.fotos.length - 4}</span>` : ''}
+            </div>
+          `;
+        }
+
+        return `
+          <div class="order-card">
+            <div>
+              <div class="order-header">
+                <span class="os-num">${osNumeroFormatado(o.id)}</span>
+                <span class="status-badge ${statusClass}">${statusLabel}</span>
+              </div>
+              <div class="order-client">${o.cliente}</div>
+              <div class="order-service">${o.servico}</div>
+
+              <div class="order-meta">
+                <div>
+                  <span>Data Pedido</span>
+                  <strong>${formatarData(o.data)}</strong>
+                </div>
+                <div>
+                  <span>Previsão Entrega</span>
+                  <strong>${formatarData(o.entregaPrevista)}</strong>
+                </div>
+              </div>
+
+              ${fotosHtml}
+            </div>
+
+            <div>
+              <div class="order-financial">
+                <div>
+                  <span style="font-size:0.7rem; color:var(--text-sub); text-transform:uppercase; font-weight:600; display:block;">Valor Total</span>
+                  <div class="price-total">${formatarMoeda(o.valor)}</div>
+                </div>
+                <div style="text-align:right;">
+                  <span class="payment-status ${quitado ? 'payment-quitado' : 'payment-falta'}">
+                    ${quitado ? '✓ Quitado' : `Falta: ${formatarMoeda(saldoFalta)}`}
+                  </span>
+                  <div style="font-size:0.75rem; color:var(--text-muted);">Pago: ${formatarMoeda(totalPago)}</div>
+                </div>
+              </div>
+
+              <div class="order-actions">
+                <button class="action-btn btn-action-view" onclick="verDetalhes(${o.id})"><i class="fa-regular fa-eye"></i> Ver</button>
+                <button class="action-btn btn-action-wpp" onclick="compartilharWhatsApp(${o.id})"><i class="fa-brands fa-whatsapp"></i> Zap</button>
+                <button class="action-btn btn-action-pdf" onclick="imprimirOrdem(${o.id})"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button class="action-btn" onclick="abrirModalPagamento(${o.id})" title="Registrar Pagamento"><i class="fa-solid fa-dollar-sign"></i></button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Modal Nova / Editar Ordem
+    function abrirModalNovaOrdem(ordemId = null) {
+      document.getElementById('form-ordem').reset();
+      fotosFormulario = [];
+      document.getElementById('ordem-data').value = new Date().toISOString().split('T')[0];
+
+      if (ordemId) {
+        const o = ordens.find(x => x.id === ordemId);
+        if (o) {
+          document.getElementById('modal-ordem-titulo').innerText = 'Editar Ordem ' + osNumeroFormatado(o.id);
+          document.getElementById('ordem-id').value = o.id;
+          document.getElementById('ordem-cliente').value = o.cliente;
+          document.getElementById('ordem-telefone').value = o.telefone || '';
+          document.getElementById('ordem-servico').value = o.servico;
+          document.getElementById('ordem-quantidade').value = o.quantidade;
+          document.getElementById('ordem-valor-unitario').value = o.valorUnitario;
+          document.getElementById('ordem-desconto').value = o.desconto || 0;
+          document.getElementById('ordem-status').value = o.status;
+          document.getElementById('ordem-data').value = o.data || '';
+          document.getElementById('ordem-entrega-prevista').value = o.entregaPrevista || '';
+          document.getElementById('ordem-observacoes').value = o.observacoes || '';
+          fotosFormulario = [...(o.fotos || [])];
+        }
+      } else {
+        document.getElementById('modal-ordem-titulo').innerText = 'Nova Ordem de Serviço';
+        document.getElementById('ordem-id').value = '';
+        document.getElementById('ordem-quantidade').value = 1;
+        document.getElementById('ordem-valor-unitario').value = '0.00';
+        document.getElementById('ordem-desconto').value = '0.00';
+      }
+
+      calcularValorTotal();
+      renderizarPreviewFotosForm();
+      document.getElementById('modal-ordem').classList.add('active');
+    }
+
+    function salvarOrdem(e) {
+      e.preventDefault();
+      const idInput = document.getElementById('ordem-id').value;
+      const cliente = document.getElementById('ordem-cliente').value.trim();
+      const telefone = document.getElementById('ordem-telefone').value.trim();
+      const servico = document.getElementById('ordem-servico').value.trim();
+      const quantidade = parseFloat(document.getElementById('ordem-quantidade').value) || 1;
+      const valorUnitario = parseFloat(document.getElementById('ordem-valor-unitario').value) || 0;
+      const desconto = parseFloat(document.getElementById('ordem-desconto').value) || 0;
+      const valorTotal = Math.max(0, (quantidade * valorUnitario) - desconto);
+      const status = document.getElementById('ordem-status').value;
+      const data = document.getElementById('ordem-data').value;
+      const entregaPrevista = document.getElementById('ordem-entrega-prevista').value;
+      const observacoes = document.getElementById('ordem-observacoes').value.trim();
+
+      if (idInput) {
+        // Atualizar existente
+        const index = ordens.findIndex(o => o.id === parseInt(idInput));
+        if (index !== -1) {
+          ordens[index] = {
+            ...ordens[index],
+            cliente, telefone, servico, quantidade, valorUnitario, desconto, valor: valorTotal,
+            status, data, entregaPrevista, observacoes, fotos: fotosFormulario
+          };
+        }
+      } else {
+        // Criar nova ordem
+        const novoId = ordens.length > 0 ? Math.max(...ordens.map(o => o.id)) + 1 : 1;
+        const novaOrdem = {
+          id: novoId,
+          cliente, telefone, servico, quantidade, valorUnitario, desconto, valor: valorTotal,
+          status, data, entregaPrevista, observacoes, fotos: fotosFormulario,
+          pagamentos: []
+        };
+        ordens.unshift(novaOrdem);
+      }
+
+      salvarNoStorage();
+      fecharModal('modal-ordem');
+      filtrarOrdens();
+    }
+
+    // Fotos no Formulário
+    function adicionarLinkFoto() {
+      const input = document.getElementById('ordem-novo-link-foto');
+      const url = input.value.trim();
+      if (url) {
+        fotosFormulario.push(url);
+        input.value = '';
+        renderizarPreviewFotosForm();
+      }
+    }
+
+    function processarUploadFotos(e) {
+      const files = Array.from(e.target.files);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          fotosFormulario.push(ev.target.result);
+          renderizarPreviewFotosForm();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removerFotoForm(index) {
+      fotosFormulario.splice(index, 1);
+      renderizarPreviewFotosForm();
+    }
+
+    function renderizarPreviewFotosForm() {
+      const container = document.getElementById('preview-fotos-form');
+      container.innerHTML = fotosFormulario.map((f, i) => `
+        <div style="position:relative; width:54px; height:54px;">
+          <img src="${f}" style="width:100%; height:100%; object-fit:cover; border-radius:6px; border:1px solid var(--border);">
+          <button type="button" onclick="removerFotoForm(${i})" style="position:absolute; top:-6px; right:-6px; background:red; color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; cursor:pointer;">×</button>
+        </div>
+      `).join('');
+    }
+
+    // Detalhes da Ordem
+    function verDetalhes(id) {
+      const o = ordens.find(x => x.id === id);
+      if (!o) return;
+
+      const totalPago = (o.pagamentos || []).reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
+      const saldoFalta = Math.max(0, (Number(o.valor) || 0) - totalPago);
+      const quitado = saldoFalta <= 0.01;
+
+      document.getElementById('detalhes-os-numero').innerText = `Ordem de Serviço ${osNumeroFormatado(o.id)}`;
+
+      let fotosHtml = '';
+      if (o.fotos && o.fotos.length > 0) {
+        fotosHtml = `
+          <div style="margin-top:16px;">
+            <strong style="font-size:0.85rem; color:var(--text-main); display:block; margin-bottom:8px;">Fotos de Referência (${o.fotos.length}) — Clique para Ampliar:</strong>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              ${o.fotos.map((f, idx) => `
+                <div style="text-align:center;">
+                  <img src="${f}" onclick="abrirFotoZoom('${f}')" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:1px solid var(--border); cursor:pointer; box-shadow:var(--shadow);">
+                  <a href="${f}" target="_blank" style="display:block; font-size:0.7rem; color:var(--primary); margin-top:3px; text-decoration:none;">Link Direto</a>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      let pagamentosHtml = '';
+      if (o.pagamentos && o.pagamentos.length > 0) {
+        pagamentosHtml = `
+          <div style="margin-top:16px; background:#f8fafc; border-radius:8px; padding:12px;">
+            <strong style="font-size:0.85rem; color:var(--text-main); display:block; margin-bottom:8px;">Histórico de Pagamentos:</strong>
+            ${o.pagamentos.map(p => `
+              <div style="display:flex; justify-content:space-between; font-size:0.82rem; padding:4px 0; border-bottom:1px dashed #e2e8f0;">
+                <span>${formatarData(p.data)} · ${p.metodo} ${p.observacao ? `(${p.observacao})` : ''}</span>
+                <strong style="color:var(--accent-green);">+ ${formatarMoeda(p.valor)}</strong>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      document.getElementById('detalhes-conteudo').innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div>
+            <h4 style="font-size:1.2rem; color:var(--text-main);">${o.cliente}</h4>
+            <span style="font-size:0.85rem; color:var(--text-muted);">${o.telefone || 'Telefone não cadastrado'}</span>
+          </div>
+          <div>
+            <span class="status-badge ${o.status === 'ENTREGUE' ? 'status-entregue' : (o.status === 'ANDAMENTO' ? 'status-andamento' : 'status-aberta')}">
+              ${o.status}
+            </span>
+          </div>
+        </div>
+
+        <div style="background:#f1f5f9; padding:14px; border-radius:8px; margin-bottom:14px;">
+          <strong style="font-size:0.8rem; color:var(--text-sub); text-transform:uppercase;">Descrição do Pedido:</strong>
+          <p style="font-size:0.95rem; margin-top:4px; color:var(--text-main); white-space:pre-wrap;">${o.servico}</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:0.85rem; margin-bottom:14px;">
+          <div><span>Data do Pedido:</span> <strong>${formatarData(o.data)}</strong></div>
+          <div><span>Previsão de Entrega:</span> <strong>${formatarData(o.entregaPrevista)}</strong></div>
+          <div><span>Quantidade:</span> <strong>${o.quantidade}</strong></div>
+          <div><span>Valor Unitário:</span> <strong>${formatarMoeda(o.valorUnitario)}</strong></div>
+          <div><span>Desconto:</span> <strong>${formatarMoeda(o.desconto)}</strong></div>
+          <div><span>Valor Total da OS:</span> <strong style="color:var(--primary); font-size:1.05rem;">${formatarMoeda(o.valor)}</strong></div>
+        </div>
+
+        ${o.observacoes ? `<div style="font-size:0.85rem; margin-bottom:12px; color:var(--text-muted);"><strong>Observações:</strong> ${o.observacoes}</div>` : ''}
+
+        ${fotosHtml}
+        ${pagamentosHtml}
+
+        <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:12px 16px; border-radius:8px; border:1px solid var(--border);">
+          <div>
+            <span style="font-size:0.75rem; color:var(--text-sub); text-transform:uppercase;">Situação Financeira</span>
+            <div style="font-size:1.15rem; font-weight:800; color:${quitado ? 'var(--accent-green)' : 'var(--accent-rust)'};">
+              ${quitado ? 'QUITADO TOTAL' : `FALTA: ${formatarMoeda(saldoFalta)}`}
+            </div>
+          </div>
+          <button class="action-btn" onclick="abrirModalPagamento(${o.id})"><i class="fa-solid fa-plus"></i> Inserir Pagamento</button>
+        </div>
+      `;
+
+      document.getElementById('detalhes-footer').innerHTML = `
+        <button class="action-btn" onclick="abrirModalNovaOrdem(${o.id})"><i class="fa-solid fa-pen"></i> Editar</button>
+        <button class="action-btn btn-action-wpp" onclick="compartilharWhatsApp(${o.id})"><i class="fa-brands fa-whatsapp"></i> Enviar WhatsApp</button>
+        <button class="action-btn btn-action-pdf" onclick="imprimirOrdem(${o.id})"><i class="fa-solid fa-file-pdf"></i> Imprimir OS</button>
+        <button class="action-btn" style="color:red;" onclick="excluirOrdem(${o.id})"><i class="fa-solid fa-trash"></i> Excluir</button>
+      `;
+
+      document.getElementById('modal-detalhes').classList.add('active');
+    }
+
+    // Modal Pagamento
+    function abrirModalPagamento(ordemId) {
+      document.getElementById('pag-ordem-id').value = ordemId;
+      document.getElementById('pag-data').value = new Date().toISOString().split('T')[0];
+      const o = ordens.find(x => x.id === ordemId);
+      if (o) {
+        const totalPago = (o.pagamentos || []).reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
+        const falta = Math.max(0, (Number(o.valor) || 0) - totalPago);
+        document.getElementById('pag-valor').value = falta > 0 ? falta.toFixed(2) : '0.00';
+      }
+      document.getElementById('modal-pagamento').classList.add('active');
+    }
+
+    function salvarPagamento(e) {
+      e.preventDefault();
+      const ordemId = parseInt(document.getElementById('pag-ordem-id').value);
+      const valor = parseFloat(document.getElementById('pag-valor').value) || 0;
+      const metodo = document.getElementById('pag-metodo').value;
+      const data = document.getElementById('pag-data').value;
+      const observacao = document.getElementById('pag-obs').value.trim();
+
+      const o = ordens.find(x => x.id === ordemId);
+      if (o) {
+        if (!o.pagamentos) o.pagamentos = [];
+        o.pagamentos.push({
+          id: Date.now(),
+          valor, metodo, data, observacao
+        });
+        salvarNoStorage();
+        fecharModal('modal-pagamento');
+        verDetalhes(ordemId);
+        filtrarOrdens();
+      }
+    }
+
+    // Exclusão
+    function excluirOrdem(id) {
+      if (confirm('Tem certeza que deseja excluir esta Ordem de Serviço?')) {
+        ordens = ordens.filter(o => o.id !== id);
+        salvarNoStorage();
+        fecharModal('modal-detalhes');
+        filtrarOrdens();
+      }
+    }
+
+    // WhatsApp
+    function compartilharWhatsApp(id) {
+      const o = ordens.find(x => x.id === id);
+      if (!o) return;
+
+      const totalPago = (o.pagamentos || []).reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
+      const saldoFalta = Math.max(0, (Number(o.valor) || 0) - totalPago);
+      const quitado = saldoFalta <= 0.01;
+
+      let msg = `Olá *${o.cliente}*, segue o resumo da sua *Ordem de Serviço ${osNumeroFormatado(o.id)}*:\n\n`;
+      msg += `📌 *Serviço:* ${o.servico}\n`;
+      msg += `📅 *Previsão de Entrega:* ${formatarData(o.entregaPrevista)}\n`;
+      msg += `💰 *Valor Total:* ${formatarMoeda(o.valor)}\n`;
+      msg += `✅ *Total Pago:* ${formatarMoeda(totalPago)}\n`;
+      if (!quitado) {
+        msg += `⏳ *Saldo a Pagar:* ${formatarMoeda(saldoFalta)}\n`;
+      } else {
+        msg += `🎉 *Situação:* QUITADO\n`;
+      }
+
+      if (o.fotos && o.fotos.length > 0) {
+        msg += `\n📸 *Fotos de referência (${o.fotos.length}):*\n`;
+        o.fotos.forEach((foto, idx) => {
+          msg += `• Imagem ${idx + 1}: ${foto}\n`;
+        });
+      }
+
+      msg += `\n_${config.nome}_\n`;
+      msg += `CNPJ: ${config.cnpj}\n`;
+      msg += `Chave Pix (CNPJ): ${config.pixChave}\n`;
+      msg += `Favorecido Pix: *${config.pixTitular}*`;
+
+      const foneLimpo = (o.telefone || '').replace(/\D/g, '');
+      const url = `https://api.whatsapp.com/send?phone=${foneLimpo.length >= 10 ? '55' + foneLimpo : ''}&text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+    }
+
+    // Impressão / PDF
+    function imprimirOrdem(id) {
+      const o = ordens.find(x => x.id === id);
+      if (!o) return;
+
+      const totalPago = (o.pagamentos || []).reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
+      const saldoFalta = Math.max(0, (Number(o.valor) || 0) - totalPago);
+      const quitado = saldoFalta <= 0.01;
+
+      const printSheet = document.getElementById('print-sheet');
+      printSheet.innerHTML = `
+        <div class="print-header">
+          <div class="print-brand">
+            <h2>${config.nome}</h2>
+            <p>CNPJ: ${config.cnpj}</p>
+            <p>Pix (CNPJ): ${config.pixChave} · Favorecido: <strong>${config.pixTitular}</strong></p>
+          </div>
+          <div class="print-os-id">
+            <h3>ORDEM DE SERVIÇO</h3>
+            <p style="font-weight:700; font-size:1.1rem; color:var(--accent-rust);">${osNumeroFormatado(o.id)}</p>
+            <p style="font-size:0.8rem; color:#64748b;">Emissão: ${formatarData(new Date().toISOString().split('T')[0])}</p>
+          </div>
+        </div>
+
+        <div style="border:1px solid #cbd5e1; border-radius:8px; padding:14px; margin-bottom:18px;">
+          <div style="display:grid; grid-template-columns:2fr 1fr; gap:12px; margin-bottom:10px;">
+            <div><span style="font-size:0.75rem; color:#64748b;">CLIENTE:</span> <strong style="font-size:1rem;">${o.cliente}</strong></div>
+            <div><span style="font-size:0.75rem; color:#64748b;">CONTATO:</span> <strong>${o.telefone || 'Não informado'}</strong></div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+            <div><span style="font-size:0.75rem; color:#64748b;">DATA DO PEDIDO:</span> <strong>${formatarData(o.data)}</strong></div>
+            <div><span style="font-size:0.75rem; color:#64748b;">PREVISÃO ENTREGA:</span> <strong>${formatarData(o.entregaPrevista)}</strong></div>
+            <div><span style="font-size:0.75rem; color:#64748b;">SITUAÇÃO:</span> <strong>${o.status}</strong></div>
+          </div>
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; margin-bottom:18px; font-size:0.9rem;">
+          <thead>
+            <tr style="background:var(--primary); color:white; text-align:left;">
+              <th style="padding:8px 10px;">DESCRIÇÃO DO SERVIÇO</th>
+              <th style="padding:8px 10px; text-align:center;">QTD</th>
+              <th style="padding:8px 10px; text-align:right;">VALOR UNIT.</th>
+              <th style="padding:8px 10px; text-align:right;">DESCONTO</th>
+              <th style="padding:8px 10px; text-align:right;">VALOR TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #e2e8f0;">
+              <td style="padding:10px;">${o.servico}</td>
+              <td style="padding:10px; text-align:center;">${o.quantidade}</td>
+              <td style="padding:10px; text-align:right;">${formatarMoeda(o.valorUnitario)}</td>
+              <td style="padding:10px; text-align:right;">${formatarMoeda(o.desconto)}</td>
+              <td style="padding:10px; text-align:right; font-weight:700;">${formatarMoeda(o.valor)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        ${o.fotos && o.fotos.length > 0 ? `
+          <div style="margin-bottom:18px;">
+            <strong style="font-size:0.85rem; display:block; margin-bottom:6px;">Fotos de Referência Anexadas:</strong>
+            <div style="display:flex; gap:10px;">
+              ${o.fotos.slice(0, 4).map(f => `<img src="${f}" style="width:60px; height:60px; object-fit:cover; border:1px solid #cbd5e1; border-radius:6px;">`).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:30px;">
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px;">
+            <span style="font-size:0.75rem; color:#64748b;">TOTAL PAGO</span>
+            <div style="font-size:1.2rem; font-weight:800; color:var(--accent-green);">${formatarMoeda(totalPago)}</div>
+          </div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px;">
+            <span style="font-size:0.75rem; color:#64748b;">SITUAÇÃO FINANCEIRA</span>
+            <div style="font-size:1.2rem; font-weight:800; color:${quitado ? 'var(--accent-green)' : 'var(--accent-rust)'};">
+              ${quitado ? 'QUITADO' : `FALTA: ${formatarMoeda(saldoFalta)}`}
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-top:60px; text-align:center;">
+          <div>
+            <div style="border-top:1px solid #64748b; padding-top:6px; font-size:0.85rem; font-weight:600;">${o.cliente}</div>
+            <span style="font-size:0.75rem; color:#64748b;">Assinatura do Cliente</span>
+          </div>
+          <div>
+            <div style="border-top:1px solid #64748b; padding-top:6px; font-size:0.85rem; font-weight:600;">${config.pixTitular}</div>
+            <span style="font-size:0.75rem; color:#64748b;">${config.nome}</span>
+          </div>
+        </div>
+
+        <div style="text-align:center; font-size:0.75rem; color:#94a3b8; margin-top:50px;">
+          ${config.nome} · CNPJ ${config.cnpj} · Chave Pix: ${config.pixChave} (${config.pixTitular})
+        </div>
+      `;
+
+      window.print();
+    }
+
+    // Zoom de foto
+    function abrirFotoZoom(url) {
+      document.getElementById('img-zoom-tag').src = url;
+      document.getElementById('btn-zoom-open-new').href = url;
+      document.getElementById('modal-foto-zoom').classList.add('active');
+    }
+
+    // Clientes View
+    function renderizarClientes() {
+      const mapa = {};
+      ordens.forEach(o => {
+        if (!mapa[o.cliente]) {
+          mapa[o.cliente] = { nome: o.cliente, telefone: o.telefone, count: 0, total: 0 };
+        }
+        mapa[o.cliente].count += 1;
+        mapa[o.cliente].total += (Number(o.valor) || 0);
+      });
+
+      const lista = Object.values(mapa);
+      const container = document.getElementById('lista-clientes');
+      if (lista.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-sub);">Nenhum cliente cadastrado ainda.</p>`;
+        return;
+      }
+
+      container.innerHTML = lista.map(c => {
+        const zapUrl = c.telefone ? `https://api.whatsapp.com/send?phone=55${c.telefone.replace(/\D/g, '')}` : '#';
+        return `
+          <div class="stat-card" style="flex-direction:column; align-items:flex-start;">
+            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+              <h4 style="font-size:1.1rem; color:var(--text-main);">${c.nome}</h4>
+              <span class="status-badge status-andamento">${c.count} OS</span>
+            </div>
+            <div style="font-size:0.85rem; color:var(--text-muted); margin:6px 0;">${c.telefone || 'Sem telefone'}</div>
+            <div style="font-size:0.95rem; font-weight:800; color:var(--primary); margin-bottom:12px;">Total Gasto: ${formatarMoeda(c.total)}</div>
+            ${c.telefone ? `<a href="${zapUrl}" target="_blank" class="action-btn btn-action-wpp" style="text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> Conversar</a>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Financeiro View
+    function renderizarFinanceiro() {
+      const container = document.getElementById('tabela-financeiro-container');
+      container.innerHTML = `
+        <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left;">
+          <thead>
+            <tr style="border-bottom:2px solid var(--border); color:var(--text-muted);">
+              <th style="padding:8px;">Nº OS</th>
+              <th style="padding:8px;">Data</th>
+              <th style="padding:8px;">Cliente</th>
+              <th style="padding:8px;">Serviço</th>
+              <th style="padding:8px; text-align:right;">Valor OS</th>
+              <th style="padding:8px; text-align:right;">Recebido</th>
+              <th style="padding:8px; text-align:right;">Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ordens.map(o => {
+              const pago = (o.pagamentos || []).reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
+              const saldo = Math.max(0, (Number(o.valor) || 0) - pago);
+              return `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="padding:8px; font-weight:700;">${osNumeroFormatado(o.id)}</td>
+                  <td style="padding:8px;">${formatarData(o.data)}</td>
+                  <td style="padding:8px; font-weight:600;">${o.cliente}</td>
+                  <td style="padding:8px; color:var(--text-muted);">${o.servico}</td>
+                  <td style="padding:8px; text-align:right; font-weight:700;">${formatarMoeda(o.valor)}</td>
+                  <td style="padding:8px; text-align:right; color:var(--accent-green); font-weight:600;">${formatarMoeda(pago)}</td>
+                  <td style="padding:8px; text-align:right; color:${saldo > 0 ? 'var(--accent-rust)' : 'var(--accent-green)'}; font-weight:700;">${formatarMoeda(saldo)}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // Backup JSON
+    function exportarBackupJSON() {
+      const dados = { config, ordens, dataBackup: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `backup_showcial_media_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+    }
+
+    function importarBackupJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const dados = JSON.parse(ev.target.result);
+          if (dados.ordens) {
+            ordens = dados.ordens;
+            salvarNoStorage();
+          }
+          if (dados.config) {
+            config = dados.config;
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            carregarConfiguracoes();
+          }
+          alert('Backup importado com sucesso!');
+          filtrarOrdens();
+        } catch (err) {
+          alert('Arquivo de backup inválido.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function fecharModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    // Iniciar na carga da página
+    window.addEventListener('DOMContentLoaded', inicializar);
+  </script>
+</body>
+</html>
