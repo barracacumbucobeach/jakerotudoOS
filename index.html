@@ -16,20 +16,23 @@
 
   <style>
     :root {
-      --primary: #1b7a85;
-      --primary-dark: #135d66;
-      --primary-light: #e6f4f5;
-      --accent-rust: #8a2b06;
-      --accent-lime: #8ee600;
-      --accent-green: #2e7d32;
-      --accent-amber: #e65100;
-      --accent-blue: #0288d1;
+      /* Jakero Theme Color Palette (Fiel ao APK Android) */
+      --primary: #1b7a85;             /* JakeroTeal (0xFF1B7A85) */
+      --primary-dark: #135d66;        /* JakeroTealDark */
+      --primary-light: #e6f4f5;       /* JakeroTealLight */
+      --accent-rust: #8a2b06;         /* JakeroRust (0xFF8A2B06) */
+      --accent-lime: #8ee600;         /* JakeroLime (0xFF8EE600) */
+      --accent-lime-text: #193800;    /* JakeroLimeText (0xFF193800) */
+      --dark-block: #1c1a17;          /* JakeroDarkBlockBackground (0xFF1C1A17) */
+      --accent-green: #2e7d32;        /* Verde Concluído / Quitado */
+      --accent-amber: #e65100;        /* Laranja Aberta */
+      --accent-blue: #0288d1;         /* Azul Andamento */
       
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --border: #e2e8f0;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
+      --bg: #f8fafc;                  /* Page Background */
+      --surface: #ffffff;             /* Card / Surface Background */
+      --border: #e2e8f0;              /* Border Color */
+      --text-main: #1c1a17;           /* Jakero Text Color */
+      --text-muted: #64748b;          /* Text Secondary Color */
       --text-sub: #94a3b8;
       --radius: 14px;
       --radius-sm: 8px;
@@ -64,7 +67,7 @@
     .topbar-container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 12px 20px;
+      padding: 10px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -75,32 +78,29 @@
       gap: 12px;
       text-decoration: none;
     }
-    .brand-logo {
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 1.2rem;
-      box-shadow: 0 4px 12px rgba(27,122,133,0.3);
+    .brand-logo-img {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--accent-lime);
+      background: #ffffff;
+      object-fit: cover;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: block;
     }
     .brand-info h1 {
       font-size: 1.15rem;
       font-weight: 800;
-      color: var(--primary);
-      letter-spacing: -0.5px;
+      color: var(--text-main);
+      letter-spacing: 0.5px;
       line-height: 1.1;
+      text-transform: uppercase;
     }
     .brand-info span {
-      font-size: 0.72rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
 
     .nav-desktop {
@@ -126,28 +126,29 @@
       color: var(--primary);
     }
     .nav-btn.active {
-      background: var(--primary);
-      color: white;
+      background: var(--accent-lime);
+      color: var(--accent-lime-text);
+      font-weight: 800;
     }
 
     .btn-new-os {
-      background: linear-gradient(135deg, var(--accent-rust), #b03a0a);
-      color: white;
+      background: var(--accent-lime);
+      color: var(--accent-lime-text);
       border: none;
       padding: 9px 18px;
-      border-radius: 50px;
-      font-weight: 700;
+      border-radius: 14px;
+      font-weight: 800;
       font-size: 0.88rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 4px 12px rgba(138,43,6,0.25);
+      box-shadow: 0 4px 12px rgba(142,230,0,0.35);
       transition: transform 0.15s, box-shadow 0.15s;
     }
     .btn-new-os:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(138,43,6,0.35);
+      box-shadow: 0 6px 16px rgba(142,230,0,0.45);
     }
 
     /* Pílula de Sincronização em Tempo Real */
@@ -630,6 +631,109 @@
       gap: 14px;
     }
 
+    /* Trilha de Etapas / StepProgressBar (Exatamente igual ao APK Android) */
+    .step-progress-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin: 16px 0;
+    }
+    .step-progress-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .step-track-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      position: relative;
+      z-index: 2;
+    }
+    .step-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .step-circle.done {
+      background: var(--accent-green);
+      color: white;
+    }
+    .step-circle.active-aberta {
+      background: var(--accent-amber);
+      color: white;
+    }
+    .step-circle.active-andamento {
+      background: var(--accent-blue);
+      color: white;
+    }
+    .step-circle.active-entregue {
+      background: var(--accent-green);
+      color: white;
+    }
+    .step-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 6px;
+      text-align: center;
+    }
+    .step-label.active {
+      font-weight: 800;
+      color: var(--text-main);
+    }
+    .step-connector {
+      flex: 1;
+      height: 3px;
+      background: #e2e8f0;
+      margin: 0 -4px;
+      position: relative;
+      top: -10px;
+      z-index: 1;
+    }
+    .step-connector.done {
+      background: var(--accent-green);
+    }
+    .btn-advance-step {
+      width: 100%;
+      margin-top: 16px;
+      background: var(--accent-lime);
+      color: var(--accent-lime-text);
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(142,230,0,0.3);
+    }
+    .btn-advance-step:hover {
+      box-shadow: 0 6px 16px rgba(142,230,0,0.45);
+    }
+
     /* Barra Mobile Inferior */
     .bottom-bar {
       display: none;
@@ -637,9 +741,9 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: white;
+      background: #ffffff;
       border-top: 1px solid var(--border);
-      padding: 8px 12px;
+      padding: 6px 12px 10px 12px;
       z-index: 40;
       box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
     }
@@ -654,18 +758,22 @@
       align-items: center;
       gap: 3px;
       color: var(--text-muted);
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       font-weight: 600;
       background: none;
       border: none;
       cursor: pointer;
-      padding: 4px 8px;
+      padding: 6px 12px;
+      border-radius: 12px;
+      transition: all 0.2s;
     }
     .bottom-nav-item i {
       font-size: 1.15rem;
     }
     .bottom-nav-item.active {
-      color: var(--primary);
+      color: var(--accent-lime-text);
+      background: var(--accent-lime);
+      font-weight: 800;
     }
 
     /* Print Styling (Para emissão de PDF e Impressão perfeita) */
@@ -744,10 +852,10 @@
   <header class="topbar">
     <div class="topbar-container">
       <div class="brand">
-        <div class="brand-logo">SM</div>
+        <img src="jakero_logo.jpg" alt="Logo Jakero Showcial Media" class="brand-logo-img" onerror="this.src='app/src/main/res/drawable/jakero_logo.jpg'">
         <div class="brand-info">
-          <h1>Showcial Media</h1>
-          <span>Gestão de Ordens de Serviço</span>
+          <h1>SHOWCIAL MEDIA</h1>
+          <span>ORDENS DE SERVIÇO</span>
         </div>
       </div>
 
@@ -1454,48 +1562,42 @@
         }
 
         return `
-          <div class="order-card">
+          <div class="order-card" onclick="verDetalhes(${o.id})" style="cursor:pointer;">
             <div>
               <div class="order-header">
-                <span class="os-num">${osNumeroFormatado(o.id)}</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="os-num" style="background:#f1f5f9; color:var(--text-main); font-weight:800;">OS ${osNumeroFormatado(o.id)}</span>
+                  <span style="font-size:0.78rem; color:var(--text-muted);">${formatarData(o.data)}</span>
+                </div>
                 <span class="status-badge ${statusClass}">${statusLabel}</span>
               </div>
-              <div class="order-client">${o.cliente}</div>
-              <div class="order-service">${o.servico}</div>
-
-              <div class="order-meta">
-                <div>
-                  <span>Data Pedido</span>
-                  <strong>${formatarData(o.data)}</strong>
-                </div>
-                <div>
-                  <span>Previsão Entrega</span>
-                  <strong>${formatarData(o.entregaPrevista)}</strong>
-                </div>
-              </div>
+              <div class="order-client" style="font-size:1.05rem; font-weight:800; color:var(--text-main); margin-bottom:2px;">${o.cliente}</div>
+              <div class="order-service" style="font-size:0.86rem; color:var(--text-muted); margin-bottom:12px;">${o.servico}</div>
 
               ${fotosHtml}
             </div>
 
             <div>
-              <div class="order-financial">
+              <div class="order-financial" style="margin-bottom:12px;">
                 <div>
-                  <span style="font-size:0.7rem; color:var(--text-sub); text-transform:uppercase; font-weight:600; display:block;">Valor Total</span>
-                  <div class="price-total">${formatarMoeda(o.valor)}</div>
+                  <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; display:block;">Valor Total</span>
+                  <div class="price-total" style="color:var(--text-main); font-size:1.15rem; font-weight:800;">${formatarMoeda(o.valor)}</div>
                 </div>
                 <div style="text-align:right;">
-                  <span class="payment-status ${quitado ? 'payment-quitado' : 'payment-falta'}">
-                    ${quitado ? '✓ Quitado' : `Falta: ${formatarMoeda(saldoFalta)}`}
-                  </span>
-                  <div style="font-size:0.75rem; color:var(--text-muted);">Pago: ${formatarMoeda(totalPago)}</div>
+                  ${quitado ? `
+                    <span style="background:rgba(46,125,50,0.12); color:var(--accent-green); font-size:0.75rem; font-weight:800; padding:4px 8px; border-radius:6px; display:inline-block;">QUITADA</span>
+                  ` : `
+                    <span style="font-size:0.7rem; color:var(--text-muted); display:block; text-transform:uppercase; font-weight:600;">Falta</span>
+                    <strong style="color:var(--accent-rust); font-size:1.05rem; font-weight:800;">${formatarMoeda(saldoFalta)}</strong>
+                  `}
                 </div>
               </div>
 
-              <div class="order-actions">
+              <div class="order-actions" onclick="event.stopPropagation()">
                 <button class="action-btn btn-action-view" onclick="verDetalhes(${o.id})"><i class="fa-regular fa-eye"></i> Ver</button>
                 <button class="action-btn btn-action-wpp" onclick="compartilharWhatsApp(${o.id})"><i class="fa-brands fa-whatsapp"></i> Zap</button>
                 <button class="action-btn btn-action-pdf" onclick="imprimirOrdem(${o.id})"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-                <button class="action-btn" onclick="abrirModalPagamento(${o.id})" title="Registrar Pagamento"><i class="fa-solid fa-dollar-sign"></i></button>
+                <button class="action-btn" style="background:var(--accent-lime); color:var(--accent-lime-text); font-weight:800; border-color:var(--accent-lime);" onclick="abrirModalPagamento(${o.id})" title="Registrar Pagamento"><i class="fa-solid fa-dollar-sign"></i> Pagar</button>
               </div>
             </div>
           </div>
@@ -1679,6 +1781,71 @@
       `).join('');
     }
 
+    // Avançar Etapa do Status (Aberta -> Andamento -> Entregue) com sincronização em nuvem
+    async function avancarStatusOrdem(id) {
+      const o = ordens.find(x => x.id === id);
+      if (!o) return;
+
+      let novoStatus = o.status;
+      if (o.status === 'ABERTA') novoStatus = 'ANDAMENTO';
+      else if (o.status === 'ANDAMENTO') novoStatus = 'ENTREGUE';
+      else return;
+
+      o.status = novoStatus;
+      if (novoStatus === 'ENTREGUE' && !o.entregaReal) {
+        o.entregaReal = new Date().toISOString().split('T')[0];
+      }
+
+      salvarNoStorage();
+      verDetalhes(id);
+      filtrarOrdens();
+
+      if (config.supabaseUrl && config.supabaseKey) {
+        atualizarBadgeSync('syncing', 'Atualizando etapa no APK...');
+        try {
+          const cleanUrl = config.supabaseUrl.replace(/\/+$/, '');
+          const payload = {
+            id: o.cloudId || crypto.randomUUID(),
+            num: o.num || o.id,
+            dados: {
+              cliente: o.cliente,
+              telefone: o.telefone,
+              servico: o.servico,
+              quantidade: o.quantidade,
+              valorUnitario: o.valorUnitario,
+              entrada: o.entrada || 0,
+              desconto: o.desconto || 0,
+              observacoes: o.observacoes,
+              status: o.status,
+              data: o.data,
+              entregaPrevista: o.entregaPrevista || null,
+              entregaReal: o.entregaReal || null,
+              vencimento: o.vencimento || null,
+              plano: o.plano || null,
+              pagamentos: JSON.stringify(o.pagamentos || []),
+              fotos: JSON.stringify(o.fotos || [])
+            },
+            removido: false,
+            atualizado_em: new Date().toISOString()
+          };
+
+          await fetch(`${cleanUrl}/rest/v1/ordens`, {
+            method: 'POST',
+            headers: {
+              'apikey': config.supabaseKey,
+              'Authorization': `Bearer ${config.supabaseKey}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify(payload)
+          });
+          atualizarBadgeSync('synced', `${ordens.length} OS Sincronizadas`);
+        } catch (err) {
+          console.error('Erro ao sincronizar status no Supabase:', err);
+        }
+      }
+    }
+
     // Detalhes da Ordem
     function verDetalhes(id) {
       const o = ordens.find(x => x.id === id);
@@ -1688,7 +1855,49 @@
       const saldoFalta = Math.max(0, (Number(o.valor) || 0) - totalPago);
       const quitado = saldoFalta <= 0.01;
 
-      document.getElementById('detalhes-os-numero').innerText = `Ordem de Serviço ${osNumeroFormatado(o.id)}`;
+      document.getElementById('detalhes-os-numero').innerText = `Ordem de Serviço Nº ${osNumeroFormatado(o.id)}`;
+
+      // StepProgressBar (Fiel a StepProgressBar.kt e DetalheOrdemScreen.kt)
+      const etapas = ['ABERTA', 'ANDAMENTO', 'ENTREGUE'];
+      const indiceAtual = etapas.indexOf(o.status);
+
+      let stepTrackHtml = `
+        <div class="step-progress-card">
+          <div class="step-progress-title">ENTREGA DO SERVIÇO</div>
+          <div class="step-track-row">
+            <div class="step-item">
+              <div class="step-circle ${indiceAtual > 0 ? 'done' : (indiceAtual === 0 ? 'active-aberta' : '')}">
+                ${indiceAtual > 0 ? '<i class="fa-solid fa-check"></i>' : '1'}
+              </div>
+              <div class="step-label ${indiceAtual === 0 ? 'active' : ''}">Aberta</div>
+            </div>
+            <div class="step-connector ${indiceAtual >= 1 ? 'done' : ''}"></div>
+            <div class="step-item">
+              <div class="step-circle ${indiceAtual > 1 ? 'done' : (indiceAtual === 1 ? 'active-andamento' : '')}">
+                ${indiceAtual > 1 ? '<i class="fa-solid fa-check"></i>' : '2'}
+              </div>
+              <div class="step-label ${indiceAtual === 1 ? 'active' : ''}">Em andamento</div>
+            </div>
+            <div class="step-connector ${indiceAtual >= 2 ? 'done' : ''}"></div>
+            <div class="step-item">
+              <div class="step-circle ${indiceAtual === 2 ? 'active-entregue' : ''}">
+                ${indiceAtual === 2 ? '<i class="fa-solid fa-check"></i>' : '3'}
+              </div>
+              <div class="step-label ${indiceAtual === 2 ? 'active' : ''}">Entregue</div>
+            </div>
+          </div>
+          ${o.status !== 'ENTREGUE' ? `
+            <button class="btn-advance-step" onclick="avancarStatusOrdem(${o.id})">
+              <i class="fa-solid fa-arrow-right"></i>
+              ${o.status === 'ABERTA' ? 'Iniciar serviço (Mudar para Em andamento)' : 'Concluir serviço (Marcar como Entregue)'}
+            </button>
+          ` : `
+            <div style="margin-top:14px; padding:10px; background:#f0fdf4; border-radius:8px; text-align:center; color:var(--accent-green); font-weight:700; font-size:0.85rem;">
+              <i class="fa-solid fa-circle-check"></i> Serviço Concluído e Entregue ${o.entregaReal ? '(' + formatarData(o.entregaReal) + ')' : ''}
+            </div>
+          `}
+        </div>
+      `;
 
       let fotosHtml = '';
       if (o.fotos && o.fotos.length > 0) {
@@ -1710,10 +1919,10 @@
       let pagamentosHtml = '';
       if (o.pagamentos && o.pagamentos.length > 0) {
         pagamentosHtml = `
-          <div style="margin-top:16px; background:#f8fafc; border-radius:8px; padding:12px;">
+          <div style="margin-top:16px; background:#f8fafc; border-radius:8px; padding:12px; border:1px solid var(--border);">
             <strong style="font-size:0.85rem; color:var(--text-main); display:block; margin-bottom:8px;">Histórico de Pagamentos:</strong>
             ${o.pagamentos.map(p => `
-              <div style="display:flex; justify-content:space-between; font-size:0.82rem; padding:4px 0; border-bottom:1px dashed #e2e8f0;">
+              <div style="display:flex; justify-content:space-between; font-size:0.82rem; padding:6px 0; border-bottom:1px dashed #e2e8f0;">
                 <span>${formatarData(p.data)} · ${p.metodo} ${p.observacao ? `(${p.observacao})` : ''}</span>
                 <strong style="color:var(--accent-green);">+ ${formatarMoeda(p.valor)}</strong>
               </div>
@@ -1722,54 +1931,74 @@
         `;
       }
 
+      // Bloco Dark Superior de Destaque (Idêntico ao Card Dark do APK)
       document.getElementById('detalhes-conteudo').innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-          <div>
-            <h4 style="font-size:1.2rem; color:var(--text-main);">${o.cliente}</h4>
-            <span style="font-size:0.85rem; color:var(--text-muted);">${o.telefone || 'Telefone não cadastrado'}</span>
+        <div style="background:var(--dark-block); color:white; border-radius:16px; padding:20px; margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.8rem; font-weight:800; color:var(--accent-lime); letter-spacing:1px; text-transform:uppercase;">ORDEM Nº ${osNumeroFormatado(o.id)}</span>
+            <span style="font-size:0.8rem; color:#a49c92;">${formatarData(o.data)}</span>
           </div>
-          <div>
-            <span class="status-badge ${o.status === 'ENTREGUE' ? 'status-entregue' : (o.status === 'ANDAMENTO' ? 'status-andamento' : 'status-aberta')}">
-              ${o.status}
-            </span>
+          <div style="font-size:1.35rem; font-weight:800; color:#f3f0ea; margin-top:8px;">${o.cliente}</div>
+          <div style="font-size:0.85rem; color:#a49c92; margin-top:2px;">${o.telefone || 'Sem telefone informado'}</div>
+
+          <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:18px; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px;">
+            <div>
+              <span style="font-size:0.68rem; font-weight:700; color:#a49c92; text-transform:uppercase; letter-spacing:0.5px; display:block;">VALOR DO SERVIÇO</span>
+              <div style="font-size:1.35rem; font-weight:800; color:#f3f0ea;">${formatarMoeda(o.valor)}</div>
+            </div>
+            <div style="text-align:right;">
+              ${quitado ? `
+                <div style="background:var(--accent-green); color:white; font-size:0.75rem; font-weight:800; padding:5px 10px; border-radius:6px; display:inline-block;">QUITADA</div>
+              ` : `
+                <span style="font-size:0.68rem; font-weight:700; color:#ff8a75; text-transform:uppercase; letter-spacing:0.5px; display:block;">FALTA RECEBER</span>
+                <div style="font-size:1.25rem; font-weight:800; color:#ff8a75;">${formatarMoeda(saldoFalta)}</div>
+              `}
+            </div>
           </div>
         </div>
 
-        <div style="background:#f1f5f9; padding:14px; border-radius:8px; margin-bottom:14px;">
-          <strong style="font-size:0.8rem; color:var(--text-sub); text-transform:uppercase;">Descrição do Pedido:</strong>
-          <p style="font-size:0.95rem; margin-top:4px; color:var(--text-main); white-space:pre-wrap;">${o.servico}</p>
+        ${stepTrackHtml}
+
+        <div style="background:#ffffff; border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:14px;">
+          <strong style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">DADOS DO SERVIÇO</strong>
+          <p style="font-size:0.95rem; margin-top:6px; color:var(--text-main); white-space:pre-wrap; font-weight:600;">${o.servico}</p>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:0.85rem; margin-bottom:14px;">
-          <div><span>Data do Pedido:</span> <strong>${formatarData(o.data)}</strong></div>
-          <div><span>Previsão de Entrega:</span> <strong>${formatarData(o.entregaPrevista)}</strong></div>
-          <div><span>Quantidade:</span> <strong>${o.quantidade}</strong></div>
-          <div><span>Valor Unitário:</span> <strong>${formatarMoeda(o.valorUnitario)}</strong></div>
-          <div><span>Desconto:</span> <strong>${formatarMoeda(o.desconto)}</strong></div>
-          <div><span>Valor Total da OS:</span> <strong style="color:var(--primary); font-size:1.05rem;">${formatarMoeda(o.valor)}</strong></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:0.85rem; margin-bottom:14px; background:#f8fafc; padding:14px; border-radius:12px; border:1px solid var(--border);">
+          <div><span style="color:var(--text-muted);">Data do Pedido:</span> <strong>${formatarData(o.data)}</strong></div>
+          <div><span style="color:var(--text-muted);">Previsão de Entrega:</span> <strong>${formatarData(o.entregaPrevista)}</strong></div>
+          <div><span style="color:var(--text-muted);">Quantidade:</span> <strong>${o.quantidade}</strong></div>
+          <div><span style="color:var(--text-muted);">Valor Unitário:</span> <strong>${formatarMoeda(o.valorUnitario)}</strong></div>
+          <div><span style="color:var(--text-muted);">Desconto:</span> <strong>${formatarMoeda(o.desconto)}</strong></div>
+          <div><span style="color:var(--text-muted);">Valor Total:</span> <strong style="color:var(--primary); font-size:1rem;">${formatarMoeda(o.valor)}</strong></div>
         </div>
 
-        ${o.observacoes ? `<div style="font-size:0.85rem; margin-bottom:12px; color:var(--text-muted);"><strong>Observações:</strong> ${o.observacoes}</div>` : ''}
+        ${o.observacoes ? `<div style="font-size:0.85rem; margin-bottom:12px; color:var(--text-muted); background:#f8fafc; padding:12px; border-radius:8px; border:1px solid var(--border);"><strong>Observações:</strong> ${o.observacoes}</div>` : ''}
 
         ${fotosHtml}
         ${pagamentosHtml}
-
-        <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:12px 16px; border-radius:8px; border:1px solid var(--border);">
-          <div>
-            <span style="font-size:0.75rem; color:var(--text-sub); text-transform:uppercase;">Situação Financeira</span>
-            <div style="font-size:1.15rem; font-weight:800; color:${quitado ? 'var(--accent-green)' : 'var(--accent-rust)'};">
-              ${quitado ? 'QUITADO TOTAL' : `FALTA: ${formatarMoeda(saldoFalta)}`}
-            </div>
-          </div>
-          <button class="action-btn" onclick="abrirModalPagamento(${o.id})"><i class="fa-solid fa-plus"></i> Inserir Pagamento</button>
-        </div>
       `;
 
+      // Barra inferior com botões fiéis ao DetalheOrdemScreen.kt
+      let botaoRegistrarPag = '';
+      if (!quitado) {
+        botaoRegistrarPag = `
+          <button class="btn-new-os" style="width:100%; justify-content:center; margin-bottom:8px; background:var(--accent-lime); color:var(--accent-lime-text);" onclick="abrirModalPagamento(${o.id})">
+            <i class="fa-solid fa-dollar-sign"></i> Registrar Pagamento (Falta ${formatarMoeda(saldoFalta)})
+          </button>
+        `;
+      }
+
       document.getElementById('detalhes-footer').innerHTML = `
-        <button class="action-btn" onclick="abrirModalNovaOrdem(${o.id})"><i class="fa-solid fa-pen"></i> Editar</button>
-        <button class="action-btn btn-action-wpp" onclick="compartilharWhatsApp(${o.id})"><i class="fa-brands fa-whatsapp"></i> Enviar WhatsApp</button>
-        <button class="action-btn btn-action-pdf" onclick="imprimirOrdem(${o.id})"><i class="fa-solid fa-file-pdf"></i> Imprimir OS</button>
-        <button class="action-btn" style="color:red;" onclick="excluirOrdem(${o.id})"><i class="fa-solid fa-trash"></i> Excluir</button>
+        <div style="width:100%;">
+          ${botaoRegistrarPag}
+          <div style="display:flex; gap:8px; width:100%;">
+            <button class="action-btn" style="flex:1;" onclick="abrirModalNovaOrdem(${o.id})"><i class="fa-solid fa-pen"></i> Editar</button>
+            <button class="action-btn btn-action-wpp" style="flex:1;" onclick="compartilharWhatsApp(${o.id})"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+            <button class="action-btn btn-action-pdf" style="flex:1; background:var(--primary); color:white; border-color:var(--primary);" onclick="imprimirOrdem(${o.id})"><i class="fa-solid fa-file-pdf"></i> PDF da OS</button>
+            <button class="action-btn" style="color:red; background:#fee2e2; border-color:#fecaca;" onclick="excluirOrdem(${o.id})"><i class="fa-solid fa-trash"></i> Apagar</button>
+          </div>
+        </div>
       `;
 
       document.getElementById('modal-detalhes').classList.add('active');
